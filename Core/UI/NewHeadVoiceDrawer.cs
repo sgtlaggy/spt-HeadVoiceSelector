@@ -473,8 +473,9 @@ namespace HeadVoiceSelector.Core.UI
 
                 int num = global::UnityEngine.Random.Range(0, _voices[selectedIndex].Clips.Length);
                 TaggedClip taggedClip = _voices[selectedIndex].Clips[num];
-                await Singleton<GUISounds>.Instance.ForcePlaySound(taggedClip.Clip);
-
+#pragma warning disable CS4014
+                Singleton<GUISounds>.Instance.ForcePlaySound(taggedClip.Clip);
+#pragma warning restore CS4014
 
                 WTTChangeVoice(key);
 
