@@ -5,7 +5,6 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using EFT;
-using EFT.Customization;
 using SPT.Reflection.Utils;
 using System.Threading.Tasks;
 using System.Linq;
@@ -27,7 +26,6 @@ namespace HeadVoiceSelector.Core.UI
             EquipmentSlot.Headwear
         };
         protected static readonly CompositeDisposableClass _compositeDisposableClass = new CompositeDisposableClass();
-        private static MongoID[] _availableCustomizations;
         private static Dictionary<int, TagBank> _voices = new Dictionary<int, TagBank>();
         private static int _selectedHeadIndex;
         private static int _selectedVoiceIndex;
@@ -74,7 +72,7 @@ namespace HeadVoiceSelector.Core.UI
 
 
 
-        public static async Task AddCustomizationDrawers(OverallScreen overallScreen)
+        public static void AddCustomizationDrawers(OverallScreen overallScreen)
         {
             try
             {
@@ -160,8 +158,7 @@ namespace HeadVoiceSelector.Core.UI
 
                                     if (headDropDownBox != null && voiceDropDownBox != null)
                                     {
-                                        await getAvailableCustomizations(Singleton<ClientApplication<ISession>>.Instance.GetClientBackEndSession());
-                                        InitCustomizationDropdowns(_availableCustomizations, headDropDownBox, voiceDropDownBox);
+                                        InitCustomizationDropdowns(headDropDownBox, voiceDropDownBox);
                                         setupCustomizationDrawers(headDropDownBox, voiceDropDownBox);
 
 
@@ -204,14 +201,12 @@ namespace HeadVoiceSelector.Core.UI
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
         }
-        public static void InitCustomizationDropdowns(MongoID[] availableCustomizations, DropDownBox _headSelector, DropDownBox _voiceSelector)
+        public static void InitCustomizationDropdowns(DropDownBox _headSelector, DropDownBox _voiceSelector)
         {
             try
             {
 
                 _compositeDisposableClass.Dispose();
-
-                _availableCustomizations = availableCustomizations;
 
                 _compositeDisposableClass.SubscribeEvent<int>(_headSelector.OnValueChanged, new Action<int>(selectHeadEvent));
 
@@ -221,37 +216,6 @@ namespace HeadVoiceSelector.Core.UI
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred during initialization: {ex.Message}");
-            }
-        }
-        public static async Task getAvailableCustomizations(ISession session)
-        {
-            try
-            {
-                // List<GClass1852>
-                // GClass1852 has ‘Id’, ‘Type’, ‘Source’ as ECustomization(Type/Source)
-                GClass1851 result = await session.GetAvailableCustomizationsStorage();
-
-                List<MongoID> headsAndVoices = [];
-                foreach (var item in result)
-                {
-                    if ((item.Type is ECustomizationType.Head)
-                        || (item.Type is ECustomizationType.Voice))
-                    {
-#if DEBUG
-                        Console.WriteLine($"Found {item.Type.ToString()} {item.Id}");
-#endif
-                        headsAndVoices.Add(item.Id);
-                    }
-                }
-#if DEBUG
-                Console.WriteLine($"Found {headsAndVoices.Count()} items.");
-#endif
-                _availableCustomizations = headsAndVoices.ToArray();
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
             }
         }
         public static void setupCustomizationDrawers(DropDownBox _headSelector, DropDownBox _voiceSelector)
@@ -267,77 +231,14 @@ namespace HeadVoiceSelector.Core.UI
                     return;
                 }
 
-                _headTemplates = instance.GetAvailableHeads(PatchConstants.BackEndSession.Profile.Side).Select((h) => new KeyValuePair<string, GClass3678>(h.Id, h)).ToList();
-                _voiceTemplates = instance.GetAvailableVoices(PatchConstants.BackEndSession.Profile.Side).Select((h) => new KeyValuePair<string, GClass3681>(h.Id, h)).ToList();
-                // _headTemplates = new List<KeyValuePair<string, GClass3678>>();
-                // _voiceTemplates = new List<KeyValuePair<string, GClass3681>>();
-
-                //                 if (_availableCustomizations == null)
-                //                 {
-                //                     Console.WriteLine("_availableCustomizations is null.");
-                //                     return;
-                //                 }
-
-                //                 foreach (string itemId in _availableCustomizations)
-                //                 {
-                //                     GClass3672 anyCustomizationItem = instance.GetAnyCustomizationItem(itemId);
-                //                     if (anyCustomizationItem != null)
-                //                     {
-                //                         if (anyCustomizationItem.Side != null)
-                //                         {
-                //                             if (PatchConstants.BackEndSession.Profile != null)
-                //                             {
-
-                //                                 if (anyCustomizationItem.Side.Contains(PatchConstants.BackEndSession.Profile.Side))
-                //                                 {
-                //                                     GClass3678 gclass = anyCustomizationItem as GClass3678;
-                //                                     GClass3681 gclass2 = anyCustomizationItem as GClass3681;
-                //                                     if (gclass != null)
-                //                                     {
-                //                                         if (gclass.BodyPart == EBodyModelPart.Head)
-                //                                         {
-                //                                             _headTemplates.Add(new KeyValuePair<string, GClass3678>(itemId, gclass));
-                // #if DEBUG
-                //                                             Console.WriteLine($"Added head customization template: {itemId}");
-                // #endif
-                //                                         }
-                //                                     }
-                //                                     else if (gclass2 != null)
-                //                                     {
-                //                                         _voiceTemplates.Add(new KeyValuePair<string, GClass3681>(itemId, gclass2));
-                // #if DEBUG
-                //                                         Console.WriteLine($"Added voice customization template: {itemId}");
-                // #endif
-                //                                     }
-                //                                 }
-                //                                 else
-                //                                 {
-                // #if DEBUG
-                //                                     Console.WriteLine($"Player side {PatchConstants.BackEndSession.Profile.Side} is not contained in anyCustomizationItem.Side.");
-                // #endif
-                //                                 }
-
-                //                             }
-                //                             else
-                //                             {
-                //                                 Console.WriteLine("profile is null.");
-                //                             }
-                //                         }
-                //                         else
-                //                         {
-                //                             Console.WriteLine("anyCustomizationItem.Side is null.");
-                //                         }
-                //                     }
-                //                     else
-                //                     {
-                //                         Console.WriteLine("anyCustomizationItem is null.");
-                //                     }
-                //                 }
+                _headTemplates = instance.GetAvailableHeads(PatchConstants.BackEndSession.Profile.Side)
+                    .Select((h) => new KeyValuePair<string, GClass3678>(h.Id, h)).ToList();
+                _voiceTemplates = instance.GetAvailableVoices(PatchConstants.BackEndSession.Profile.Side)
+                    .Select((h) => new KeyValuePair<string, GClass3681>(h.Id, h)).ToList();
 
 #if DEBUG
                 Console.WriteLine($"Added {_headTemplates.Count} head customization templates.");
                 Console.WriteLine($"Added {_voiceTemplates.Count} voice customization templates.");
-
 #endif
                 _voices.Clear();
 

@@ -1,7 +1,5 @@
 ﻿#if !UNITY_EDITOR
 using SPT.Reflection.Patching;
-using EFT;
-using EFT.UI;
 using HeadVoiceSelector.Core.UI;
 using System.Reflection;
 
