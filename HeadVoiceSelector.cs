@@ -6,7 +6,7 @@ using System.IO;
 
 namespace HeadVoiceSelector
 {
-    [BepInPlugin("com.HeadVoiceSelector.Core", "HeadVoiceSelector Core", "1.0.6")]
+    [BepInPlugin("com.HeadVoiceSelector.Core", "HeadVoiceSelector Core", "1.0.7")]
 
     internal class HeadVoiceSelector : BaseUnityPlugin
     {
