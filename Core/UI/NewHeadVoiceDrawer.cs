@@ -32,8 +32,8 @@ namespace HeadVoiceSelector.Core.UI
         // type of PlayerBody.SlotViews
         public static GClass818<EquipmentSlot, PlayerBody.EquipmentSlotClass> slotViews;
         // both these GClasses inherit 3672, has ‘Category’ property of type ‘ECustomizationItemCategory’
-        private static List<KeyValuePair<string, GClass3678>> _headTemplates;
-        private static List<KeyValuePair<string, GClass3681>> _voiceTemplates;
+        private static List<KeyValuePair<MongoID, GClass3678>> _headTemplates;
+        private static List<KeyValuePair<MongoID, GClass3681>> _voiceTemplates;
         private static GameObject _overallScreen;
 
         // Routes to handle server changes
@@ -232,9 +232,9 @@ namespace HeadVoiceSelector.Core.UI
                 }
 
                 _headTemplates = instance.GetAvailableHeads(PatchConstants.BackEndSession.Profile.Side)
-                    .Select((h) => new KeyValuePair<string, GClass3678>(h.Id, h)).ToList();
+                    .Select((h) => new KeyValuePair<MongoID, GClass3678>(h.Id, h)).ToList();
                 _voiceTemplates = instance.GetAvailableVoices(PatchConstants.BackEndSession.Profile.Side)
-                    .Select((h) => new KeyValuePair<string, GClass3681>(h.Id, h)).ToList();
+                    .Select((h) => new KeyValuePair<MongoID, GClass3681>(h.Id, h)).ToList();
 
 #if DEBUG
                 Console.WriteLine($"Added {_headTemplates.Count} head customization templates.");
@@ -270,23 +270,26 @@ namespace HeadVoiceSelector.Core.UI
         {
             try
             {
+                var headId = PatchConstants.BackEndSession.Profile.Customization[EBodyModelPart.Head];
 
-                string text = PatchConstants.BackEndSession.Profile.Customization[EBodyModelPart.Head];
-
-                int num = 0;
-                while (num < _headTemplates.Count && !(_headTemplates[num].Key == text))
+                _selectedHeadIndex = _headTemplates.FindIndex(kvp => kvp.Key == headId);
+                if (_selectedHeadIndex == -1)
                 {
-                    num++;
+                    var sample = _headTemplates[0].Value;
+                    var mockHead = new GClass3678
+                    {
+                        Id = headId,
+                        Name = "Unknown",
+                        Parent = sample.Parent,
+                        Side = sample.Side,
+                        _type = sample._type
+                    };
+                    _headTemplates.Insert(0, new(headId, mockHead));
+                    _selectedHeadIndex = 0;
                 }
 
-                _selectedHeadIndex = num;
-
                 _headSelector.Show(new Func<IEnumerable<string>>(initializeHeadDropdown), null);
-
                 _headSelector.UpdateValue(_selectedHeadIndex, false, null, null);
-
-                PatchConstants.BackEndSession.Profile.Customization[EBodyModelPart.Head] = _headTemplates[_selectedHeadIndex].Key;
-
             }
             catch (Exception ex)
             {
@@ -297,21 +300,26 @@ namespace HeadVoiceSelector.Core.UI
         {
             try
             {
-                MongoID currentVoice = PatchConstants.BackEndSession.Profile.Customization[EBodyModelPart.Voice];
+                var voiceId = PatchConstants.BackEndSession.Profile.Customization[EBodyModelPart.Voice];
 
-                int selectedIndex = _voiceTemplates.FindIndex(v => v.Value.Id == currentVoice);
-
-                if (selectedIndex == -1)
+                _selectedVoiceIndex = _voiceTemplates.FindIndex(kvp => kvp.Key == voiceId);
+                if (_selectedVoiceIndex == -1)
                 {
-                    Console.WriteLine($"Current voice '{currentVoice}' not found in the voice templates.");
-                    return;
+                    var sample = _voiceTemplates[0].Value;
+                    var mockVoice = new GClass3681
+                    {
+                        Id = voiceId,
+                        Name = "Unknown",
+                        Parent = sample.Parent,
+                        Side = sample.Side,
+                        _type = sample._type
+                    };
+                    _voiceTemplates.Insert(0, new(voiceId, mockVoice));
+                    _selectedVoiceIndex = 0;
                 }
 
                 _voiceSelector.Show(new Func<IEnumerable<string>>(initializeVoiceDropdown), null);
-
-                _voiceSelector.UpdateValue(selectedIndex, false, null, null);
-
-                PatchConstants.BackEndSession.Profile.Customization[EBodyModelPart.Voice] = _voiceTemplates[selectedIndex].Value.Id;
+                _voiceSelector.UpdateValue(_selectedVoiceIndex, false, null, null);
             }
             catch (Exception ex)
             {
@@ -321,20 +329,20 @@ namespace HeadVoiceSelector.Core.UI
 
         public static IEnumerable<string> initializeHeadDropdown()
         {
-            return _headTemplates.Select(new Func<KeyValuePair<string, GClass3678>, string>(getLocalizedHead)).ToArray<string>();
+            return _headTemplates.Select(new Func<KeyValuePair<MongoID, GClass3678>, string>(getLocalizedHead)).ToArray<string>();
         }
         public static IEnumerable<string> initializeVoiceDropdown()
         {
-            return _voiceTemplates.Select(new Func<KeyValuePair<string, GClass3681>, string>(getLocalizedVoice)).ToArray<string>();
+            return _voiceTemplates.Select(new Func<KeyValuePair<MongoID, GClass3681>, string>(getLocalizedVoice)).ToArray<string>();
         }
-        public static string getLocalizedHead(KeyValuePair<string, GClass3678> x)
+        public static string getLocalizedHead(KeyValuePair<MongoID, GClass3678> x)
         {
 #if DEBUG
             Console.WriteLine($"Localizing head: {x.Key}");
 #endif
             return x.Value.NameLocalizationKey.Localized(null);
         }
-        public static string getLocalizedVoice(KeyValuePair<string, GClass3681> x)
+        public static string getLocalizedVoice(KeyValuePair<MongoID, GClass3681> x)
         {
 #if DEBUG
             Console.WriteLine($"Localizing voice: {x.Key}");
