@@ -14,7 +14,7 @@ namespace HeadVoiceSelector
         public static HeadVoiceSelector instance;
 
         public static string modPath = Path.Combine(Environment.CurrentDirectory, "user", "mods", "WTT-HeadVoiceSelector");
-        public static string pluginPath = Path.Combine(Environment.CurrentDirectory, "BepInEx", "plugins");
+        public static string pluginPath = Path.Combine(Environment.CurrentDirectory, "BepInEx", "plugins", "WTT-HeadVoiceSelector");
 
 
         internal void Awake()

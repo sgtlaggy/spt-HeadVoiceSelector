@@ -105,8 +105,8 @@
 		</None>
 	</ItemGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-      <MakeDir Directories=".\Build\BepInEx\plugins"/>
-      <Copy SourceFiles="$(TargetPath)" DestinationFolder=".\Build\BepInEx\plugins"/>
+      <MakeDir Directories=".\Build\BepInEx\plugins\WTT-HeadVoiceSelector"/>
+      <Copy SourceFiles="$(TargetPath)" DestinationFolder=".\Build\BepInEx\plugins\WTT-HeadVoiceSelector"/>
 	</Target>
 
 </Project>

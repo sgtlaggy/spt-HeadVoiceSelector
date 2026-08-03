@@ -121,8 +121,8 @@ namespace HeadVoiceSelector.Core.UI
                                     Image headIcon = headIconTransform.GetComponent<Image>();
                                     Image voiceIcon = voiceIconTransform.GetComponent<Image>();
 
-                                    var headIconPng = Path.Combine(HeadVoiceSelector.pluginPath, "WTT-HeadVoiceSelector", "Icons", "icon_face_selector.png");
-                                    var voiceIconPng = Path.Combine(HeadVoiceSelector.pluginPath, "WTT-HeadVoiceSelector", "Icons", "icon_voice_selector.png");
+                                    var headIconPng = Path.Combine(HeadVoiceSelector.pluginPath, "Icons", "icon_face_selector.png");
+                                    var voiceIconPng = Path.Combine(HeadVoiceSelector.pluginPath, "Icons", "icon_voice_selector.png");
 
                                     if (headIconPng != null && voiceIconPng != null)
                                     {
