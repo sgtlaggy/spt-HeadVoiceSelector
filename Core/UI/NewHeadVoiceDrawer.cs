@@ -5,6 +5,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using EFT;
+using EFT.Customization;
 using SPT.Reflection.Utils;
 using System.Threading.Tasks;
 using System.Linq;
@@ -25,15 +26,15 @@ namespace HeadVoiceSelector.Core.UI
             EquipmentSlot.FaceCover,
             EquipmentSlot.Headwear
         };
-        protected static readonly CompositeDisposableClass _compositeDisposableClass = new CompositeDisposableClass();
+        protected static readonly CompositeDisposable _compositeDisposableClass = new CompositeDisposable();
         private static Dictionary<int, TagBank> _voices = new Dictionary<int, TagBank>();
         private static int _selectedHeadIndex;
         private static int _selectedVoiceIndex;
         // type of PlayerBody.SlotViews
-        public static GClass818<EquipmentSlot, PlayerBody.EquipmentSlotClass> slotViews;
+        public static DictionaryListHydra<EquipmentSlot, PlayerBody.SlotView> slotViews;
         // both these GClasses inherit 3672, has ‘Category’ property of type ‘ECustomizationItemCategory’
-        private static List<KeyValuePair<MongoID, GClass3678>> _headTemplates;
-        private static List<KeyValuePair<MongoID, GClass3681>> _voiceTemplates;
+        private static List<KeyValuePair<MongoID, CustomizationHead>> _headTemplates;
+        private static List<KeyValuePair<MongoID, CustomizationPlayerVoice>> _voiceTemplates;
         private static GameObject _overallScreen;
 
         // Routes to handle server changes
@@ -223,18 +224,18 @@ namespace HeadVoiceSelector.Core.UI
             try
             {
 
-                CustomizationSolverClass instance = Singleton<CustomizationSolverClass>.Instance;
+                CustomizationSolver instance = Singleton<CustomizationSolver>.Instance;
 
                 if (instance == null)
                 {
-                    Console.WriteLine("CustomizationSolverClass instance is null.");
+                    Console.WriteLine("CustomizationSolver instance is null.");
                     return;
                 }
 
                 _headTemplates = instance.GetAvailableHeads(PatchConstants.BackEndSession.Profile.Side)
-                    .Select((h) => new KeyValuePair<MongoID, GClass3678>(h.Id, h)).ToList();
+                    .Select((h) => new KeyValuePair<MongoID, CustomizationHead>(h.Id, h)).ToList();
                 _voiceTemplates = instance.GetAvailableVoices(PatchConstants.BackEndSession.Profile.Side)
-                    .Select((h) => new KeyValuePair<MongoID, GClass3681>(h.Id, h)).ToList();
+                    .Select((h) => new KeyValuePair<MongoID, CustomizationPlayerVoice>(h.Id, h)).ToList();
 
 #if DEBUG
                 Console.WriteLine($"Added {_headTemplates.Count} head customization templates.");
@@ -276,7 +277,7 @@ namespace HeadVoiceSelector.Core.UI
                 if (_selectedHeadIndex == -1)
                 {
                     var sample = _headTemplates[0].Value;
-                    var mockHead = new GClass3678
+                    var mockHead = new CustomizationHead
                     {
                         Id = headId,
                         Name = "Unknown",
@@ -306,7 +307,7 @@ namespace HeadVoiceSelector.Core.UI
                 if (_selectedVoiceIndex == -1)
                 {
                     var sample = _voiceTemplates[0].Value;
-                    var mockVoice = new GClass3681
+                    var mockVoice = new CustomizationPlayerVoice
                     {
                         Id = voiceId,
                         Name = "Unknown",
@@ -329,20 +330,20 @@ namespace HeadVoiceSelector.Core.UI
 
         public static IEnumerable<string> initializeHeadDropdown()
         {
-            return _headTemplates.Select(new Func<KeyValuePair<MongoID, GClass3678>, string>(getLocalizedHead)).ToArray<string>();
+            return _headTemplates.Select(new Func<KeyValuePair<MongoID, CustomizationHead>, string>(getLocalizedHead)).ToArray<string>();
         }
         public static IEnumerable<string> initializeVoiceDropdown()
         {
-            return _voiceTemplates.Select(new Func<KeyValuePair<MongoID, GClass3681>, string>(getLocalizedVoice)).ToArray<string>();
+            return _voiceTemplates.Select(new Func<KeyValuePair<MongoID, CustomizationPlayerVoice>, string>(getLocalizedVoice)).ToArray<string>();
         }
-        public static string getLocalizedHead(KeyValuePair<MongoID, GClass3678> x)
+        public static string getLocalizedHead(KeyValuePair<MongoID, CustomizationHead> x)
         {
 #if DEBUG
             Console.WriteLine($"Localizing head: {x.Key}");
 #endif
             return x.Value.NameLocalizationKey.Localized(null);
         }
-        public static string getLocalizedVoice(KeyValuePair<MongoID, GClass3681> x)
+        public static string getLocalizedVoice(KeyValuePair<MongoID, CustomizationPlayerVoice> x)
         {
 #if DEBUG
             Console.WriteLine($"Localizing voice: {x.Key}");
@@ -398,7 +399,7 @@ namespace HeadVoiceSelector.Core.UI
 
                     if (inventoryPlayerModelWithStatsWindow != null)
                     {
-                        await playerModelViewScript.Show(PatchConstants.BackEndSession.Profile, null, new Action(inventoryPlayerModelWithStatsWindow.method_5), 0f, null, true);
+                        await playerModelViewScript.Show(PatchConstants.BackEndSession.Profile, null, new Action(inventoryPlayerModelWithStatsWindow.CG_ShowPreview), 0f, null, true);
 
                         changeSelectedHead(false, playerModelViewScript);
                     }
@@ -466,7 +467,7 @@ namespace HeadVoiceSelector.Core.UI
                 TagBank tagBank;
                 if (!_voices.TryGetValue(selectedIndex, out tagBank))
                 {
-                    TagBank result = await Singleton<GClass899>.Instance.TakeVoice(_voiceTemplates[_selectedVoiceIndex].Value.Name, EPhraseTrigger.OnMutter);
+                    TagBank result = await Singleton<PlayerVoiceLoader>.Instance.TakeVoice(_voiceTemplates[_selectedVoiceIndex].Value.Name, EPhraseTrigger.OnMutter);
                     _voices.Add(selectedIndex, result);
                     if (result == null)
                     {
